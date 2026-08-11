@@ -1,0 +1,95 @@
+# Config to optimize scenes from mipNeRF 360 dataset (converted to TASE format)
+# Including semantic features that can be used for semantic segmentation and semantic view synthesis
+
+# I/O
+dataset_type: TASE
+result_dir: /{}/{}
+disable_viewer: true    # Assume that a viewer is already attached
+
+# Training
+max_steps: 10000
+batch_size: 1
+test_every: 8
+global_scale: 1.0
+normalize_world_space: true
+
+# Checkpoints & eval
+eval_steps: []
+save_steps: []
+save_ply: false
+
+# Initialization
+init_type: pointcloud
+init_num_pts: 150000
+init_extent: 3.0
+init_scale: 1.2
+init_opa: 0.8
+max_init_size: 0.8
+sh_degree: 0
+
+# Rendering
+near_plane: 0.01
+far_plane: 1000000000.0
+camera_model: pinhole
+background_model: mlp
+antialiased: true
+
+# Losses
+feature_loss: true
+feature_lambda: 0.5
+num_semantic_features: 128    # Currently needs to match the loaded features distribution
+feature_only_iters: 0
+ssim_lambda: 0.1
+l1_lambda: 0.3
+depth_lambda: 0.05
+depth_tollerance: 0.5
+alpha_loss: false
+depth_loss: false
+normal_loss: false
+use_loss_mask: true    # Only applied where loss masks are available
+
+feature_dist_regularization: 0.1
+feature_dist_loss_interval: 10
+
+feature_local_smoothness: 50.0
+feature_smoothness_loss_interval: 10
+feature_knn_recompute_max_steps: 100
+feature_knn_K: 5
+feature_knn_max_dist: 0.2
+
+# Regularization
+opacity_reg: 0.1
+scale_reg: 2.0  
+geometry_change_exponent: 2.0
+color_desaturate_exponent: 2.0
+
+target_opacity: 0.5
+target_color: [0.5, 0.5, 0.5]
+
+# Densification
+strategy:
+  prune_opa: 0.01
+  grow_grad2d: 0.00001
+  grow_scale3d: 0.05
+  grow_scale2d: 0.001
+  prune_scale3d: 0.1
+  prune_scale2d: 0.05
+  refine_scale2d_stop_iter: 0
+  refine_start_iter: 100
+  refine_stop_iter: 1000
+  reset_every: 9999   # Maybe I need to reset during the edit? When? What does that mean for the optimization?
+  refine_every: 300
+  pause_refine_after_reset: 100
+  absgrad: False      # Needed to be disabled, probably due to my splitting / merging of the gaussians 
+
+# Learning rates
+learning_rates:
+  means: 0.001
+  scales: 0.0005
+  opacities: 0.001
+  quats: 0.0005
+  sh0: 0.0025
+  shN: 0.000125
+  features: 0.0001
+  background: 0.00005
+  feature_bg: 0.00005

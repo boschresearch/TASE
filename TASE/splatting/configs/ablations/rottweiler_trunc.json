@@ -1,0 +1,33 @@
+{
+    "ckpt_path": "/fs/scratch/rb_bd_dlp_rng-dl01_cr_AIQ_employees/fat2hi/Workspace/Repos/TASE/OUTPUT/reconstruction/bear/ckpts/step29999.pt",
+    "segmentation": "/fs/scratch/rb_bd_dlp_rng-dl01_cr_AIQ_employees/fat2hi/Workspace/Repos/TASE/OUTPUT/reconstruction/bear/bear.seg",
+
+    "min_cam_dist": 2.5,
+    "max_cam_dist": 3.5,
+    "color_reg": 0.01,
+    "color_desaturate": 0.01,
+    "target_opacity": 0.0,
+    "opcacity_decay": 0.1,
+    "opacity_reg": 0.2,
+    "dilate_3d": 0.0,
+    "perturb_3d": 0.0,
+    "local_alpha_reg_interval": 3,
+    "geometry_change_penalty": 2.0,
+
+    "mode": "local",
+    "auto_edit_iters": 8,
+    "auto_console_iters": 24,
+    "auto_geometry_lr_scale_max": 2.0,
+    "auto_train_steps": 300,
+    "prompt": "a rottweiler dog with a shiny black coat and brown markings",
+    "auto_edit": true,
+
+    "auto_ctrl_strength_start": 0.55,
+    "auto_rgb_noise_start": 0.95,
+    "auto_rgb_noise_cap_edit": 0.85,
+    "auto_2d_mask_dilate_start": 0.1,
+    "auto_2d_mask_dilate_cap": 0.0,
+    "auto_ctrl_dims_start": 8,
+    "auto_ctrl_dims_cap": 64,
+    "auto_ctrl_dims_cap_console": 64
+}

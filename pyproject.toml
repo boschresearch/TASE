@@ -1,0 +1,61 @@
+[project]
+name = "tase"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "accelerate==1.6.0",
+    "appdirs==1.4.4",
+    "debugpy==1.8.17",
+    "diffusers==0.35.2",
+    "dinov3",
+    "fpsample==0.3.3",
+    "gsplat==1.5.3",
+    "imageio==2.37.0",
+    "imageio-ffmpeg==0.6.0",
+    "iopath==0.1.10",
+    "mmengine==0.10.7",
+    "nerfview==0.0.3",
+    "opencv-python==4.11.0.86",
+    "openmim>=0.3.9",
+    "pillow==11.2.1",
+    "pyquaternion==0.9.9",
+    "pyyaml==6.0.2",
+    "rawpy==0.25.0",
+    "scikit-learn==1.6.1",
+    "sentencepiece==0.2.0",
+    "setuptools==80.9.0",
+    "splines==0.3.3",
+    "tensorboard>=2.20.0",
+    "nvidia-cudnn-cu13",
+    "torch==2.12",
+    "torch-incremental-pca==0.0.14",
+    "torchmetrics",
+    "torchvision",
+    "tqdm==4.67.1",
+    "transformers==4.57.1",
+    "tyro==0.9.27",
+    "viser==1.0.1",
+    "pycolmap==4.0.4",
+    "dacite==1.9.2",
+    "einops==0.8.2",
+    "lightning==2.6.1",
+    "sk-video==1.1.10",
+    "xformers",
+]
+
+
+[tool.setuptools]
+packages = ["TASE"]
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[tool.uv.sources]
+dinov3 = { git = "https://github.com/facebookresearch/dinov3.git", rev = "54694f7" }
+torch = { index = "pytorch-cu130" }
+torchvision = { index = "pytorch-cu130" }
+xformers = { index = "pytorch-cu130" }

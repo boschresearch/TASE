@@ -1,0 +1,9 @@
+{
+    "mode": "local",
+    "auto_edit_iters": 12,
+    "auto_console_iters": 24,
+    "auto_geometry_lr_scale_max": 3.0,
+    "auto_train_steps": 300,
+    "prompt": "a classic blue motorcycle with a low brown saddle, chrome details and a round headlight",
+    "auto_edit": true
+}

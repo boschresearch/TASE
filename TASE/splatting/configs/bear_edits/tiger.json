@@ -1,0 +1,9 @@
+{
+    "mode": "local",
+    "auto_edit_iters": 8,
+    "auto_console_iters": 24,
+    "auto_geometry_lr_scale_max": 2.0,
+    "auto_train_steps": 300,
+    "prompt": "a tiger with bold orange fur and striking black stripes, fierce eyes, and a powerful build",
+    "auto_edit": true
+}

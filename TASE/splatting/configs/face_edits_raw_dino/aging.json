@@ -1,0 +1,9 @@
+{
+    "mode": "local",
+    "auto_edit_iters": 4,
+    "auto_console_iters": 20,
+    "auto_train_steps": 300,
+    "auto_geometry_lr_scale_max": 0.5,
+    "prompt": "An elderly person with wrinkles and grey hair, aged face, realistic.",
+    "auto_edit": true
+}

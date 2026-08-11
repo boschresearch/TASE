@@ -1,0 +1,20 @@
+{
+    "mode": "local",
+    "auto_edit": false,
+    "runner_config": "tase_edit_local.yml",
+    "segmentation": "my_run/bear/ckpts/bear.seg",
+    "ckpt_path": "my_run/bear/ckpts/step29999.pt",
+    "min_cam_dist": 2.5,
+    "max_cam_dist": 3.5,
+    "color_reg": 0.005,
+    "color_desaturate": 0.005,
+    "target_opacity": 0.0,
+    "opcacity_decay": 0.1,
+    "opacity_reg": 0.2,
+    "auto_rgb_noise_cap_edit": 0.9,
+    "auto_ctrl_strength_start": 0.5,
+    "dilate_3d": 0.0,
+    "perturb_3d": 0.0,
+    "local_alpha_reg_interval": 3,
+    "geometry_change_penalty": 2.0
+}

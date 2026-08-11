@@ -1,0 +1,9 @@
+{
+    "mode": "local",
+    "auto_edit_iters": 8,
+    "auto_console_iters": 16,
+    "auto_train_steps": 300,
+    "auto_geometry_lr_scale_max": 2.0,
+    "prompt": "a light red mountain bike MTB with a chrome suspension fork, disc brakes and fat tires",
+    "auto_edit": true
+}

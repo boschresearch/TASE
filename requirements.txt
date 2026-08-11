@@ -1,0 +1,64 @@
+# This file mirrors the dependencies in pyproject.toml and is provided for
+# reference only. The canonical source of truth is pyproject.toml / uv.lock.
+# See README.md for installation instructions.
+#
+# CUDA driver/nvcc >= 13.0 required; tested on NVIDIA A100 (80 GB), H200, B200.
+# torch/torchvision/xformers must be installed from the CUDA 13.0 PyTorch index, e.g.:
+#   pip3 install -U torch torchvision xformers --index-url https://download.pytorch.org/whl/cu130
+
+torch>=2.8.0,<2.9.0
+torchvision>=0.23.0,<0.24.0
+torchmetrics>=1.8.2
+tensorboard>=2.20.0
+nvidia-cudnn-cu12==9.5.1.17
+
+gsplat==1.5.3
+viser==1.0.1
+
+git+https://github.com/facebookresearch/dinov3.git@54694f7
+diffusers==0.35.2
+transformers==4.57.1
+accelerate==1.6.0
+sentencepiece==0.2.0
+xformers==0.0.35
+
+mmengine==0.10.7
+openmim>=0.3.9
+
+# We do not want all the expensive dependencies of nerfstudio, so we install only the required ones
+appdirs==1.4.4
+rawpy==0.25.0
+splines==0.3.3
+nerfview==0.0.3
+# nerfstudio has to be manually installed with --no-deps flag:
+# uv pip install nerfstudio==1.1.5 --no-deps
+
+torch-incremental-pca==0.0.14
+pyquaternion==0.9.9
+pycolmap==4.0.4
+dacite==1.9.2
+einops==0.8.2
+lightning==2.6.1
+
+tyro==0.9.27
+PyYAML==6.0.2
+scikit-learn==1.6.1
+opencv-python==4.11.0.86
+pillow==11.2.1
+tqdm==4.67.1
+fpsample==0.3.3
+imageio==2.37.0
+imageio-ffmpeg==0.6.0
+sk-video==1.1.10
+
+# requirement for pytorch3d
+iopath==0.1.10
+
+setuptools==80.9.0
+debugpy==1.8.17
+
+# Installed separately with --no-build-isolation (require torch at build time):
+# CUDA_ARCHITECTURES="80;100" uv pip install --no-deps --no-build-isolation \
+#   git+https://github.com/rahul-goel/fused-ssim
+# TORCH_CUDA_ARCH_LIST="8.0;10.0" uv pip install --no-deps --no-build-isolation \
+#   git+https://github.com/facebookresearch/pytorch3d.git@v0.7.9

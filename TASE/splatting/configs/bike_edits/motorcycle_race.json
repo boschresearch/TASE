@@ -1,0 +1,9 @@
+{
+    "mode": "local",
+    "auto_edit_iters": 12,
+    "auto_console_iters": 24,
+    "auto_train_steps": 300,
+    "auto_geometry_lr_scale_max": 3.0,
+    "prompt": "a light grey racing motorcycle with a low black saddle, a red angular design on the side and red brakes",
+    "auto_edit": true
+}

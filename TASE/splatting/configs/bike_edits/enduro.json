@@ -1,0 +1,9 @@
+{
+    "mode": "local",
+    "auto_edit_iters": 12,
+    "auto_console_iters": 24,
+    "auto_train_steps": 300,
+    "auto_geometry_lr_scale_max": 3.0,
+    "prompt": "a bright orange enduro dirt bike with a low black saddle, knobby tires, a big chrome front suspension fork, disk brakes and big orange fenders",
+    "auto_edit": true
+}

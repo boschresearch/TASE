@@ -1,0 +1,810 @@
+<!--
+  Copyright (c) 2025 Robert Bosch GmbH
+  SPDX-License-Identifier: AGPL-3.0
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TASE — Video Comparison</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.getElementById('prompt-box'), {delimiters:[{left:'$',right:'$',display:false}]})"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #111;
+    color: #e8e8e8;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    gap: 16px;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: #fff;
+  }
+
+  /* ── Mode Toggle ── */
+  .mode-toggle {
+    display: flex;
+    background: #222;
+    border-radius: 8px;
+    padding: 4px;
+    gap: 4px;
+  }
+  .mode-toggle button {
+    padding: 6px 20px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #aaa;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .mode-toggle button.active {
+    background: #3a7bd5;
+    color: #fff;
+    font-weight: 600;
+  }
+
+  /* ── Selectors Panel ── */
+  .selectors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    width: 100%;
+    max-width: 960px;
+  }
+  .selector-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 140px;
+  }
+  .selector-group label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #888;
+  }
+  .selector-group select {
+    background: #1e1e1e;
+    color: #e8e8e8;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .selector-group select:focus { border-color: #3a7bd5; }
+  .selector-group select:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* divider between left/right selectors */
+  .selector-sep {
+    width: 1px;
+    background: #333;
+    align-self: stretch;
+    margin: 0 4px;
+  }
+
+  /* ── Comparison Viewport ── */
+  #comparison-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 960px;
+    background: #000;
+    border-radius: 10px;
+    overflow: hidden;
+    user-select: none;
+    /* aspect ratio set by JS after first video loads */
+    aspect-ratio: 16/9;
+    cursor: pointer;
+  }
+
+  #comparison-wrapper video {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: contain;
+    display: block;
+    pointer-events: none;
+  }
+
+  #video-right { z-index: 1; }
+  #video-left  { z-index: 2; }
+
+  /* The left video is clipped — width of clip set via JS */
+  #left-clip {
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%;
+    overflow: hidden;
+    z-index: 2;
+  }
+  #left-clip video {
+    position: absolute;
+    top: 0; left: 0;
+  }
+
+  /* Divider line + handle */
+  #divider {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 3px;
+    background: rgba(255,255,255,0.85);
+    z-index: 10;
+    transform: translateX(-50%);
+    cursor: ew-resize;
+    pointer-events: all;
+  }
+  #divider-handle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 36px;
+    height: 36px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    pointer-events: none;
+  }
+
+  /* Method label overlays */
+  .method-label {
+    position: absolute;
+    top: 10px;
+    z-index: 8;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    font-size: 0.78rem;
+    padding: 3px 10px;
+    border-radius: 4px;
+    pointer-events: none;
+    max-width: 45%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #label-left  { left: 10px; }
+  #label-right { right: 10px; }
+
+  /* Pause overlay */
+  #pause-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+  #pause-overlay.visible { opacity: 1; }
+  #pause-icon {
+    width: 64px; height: 64px;
+    background: rgba(0,0,0,0.6);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    color: #fff;
+  }
+
+  /* ── Progress Bar ── */
+  #progress-area {
+    width: 100%;
+    max-width: 960px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  #time-display {
+    font-size: 0.78rem;
+    color: #888;
+    min-width: 80px;
+    text-align: center;
+  }
+  #progress-bar-track {
+    flex: 1;
+    height: 6px;
+    background: #333;
+    border-radius: 3px;
+    position: relative;
+    cursor: pointer;
+  }
+  #progress-bar-fill {
+    height: 100%;
+    background: #3a7bd5;
+    border-radius: 3px;
+    width: 0%;
+    pointer-events: none;
+  }
+  #progress-bar-thumb {
+    position: absolute;
+    top: 50%;
+    width: 14px; height: 14px;
+    background: #fff;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    left: 0%;
+    box-shadow: 0 0 4px rgba(0,0,0,0.5);
+    pointer-events: none;
+  }
+
+  /* ── Prompt Box ── */
+  #prompt-box {
+    width: 100%;
+    max-width: 960px;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: #ccc;
+    min-height: 52px;
+  }
+  #prompt-box .label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #666;
+    display: block;
+    margin-bottom: 4px;
+  }
+  #prompt-box .original-desc {
+    color: #888;
+    font-style: italic;
+  }
+  #prompt-box .edit-desc {
+    color: #e0e0e0;
+  }
+
+  #no-video-msg {
+    display: none;
+    position: absolute;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    color: #555;
+    font-size: 1rem;
+    z-index: 20;
+    background: #000;
+  }
+  #no-video-msg.visible { display: flex; }
+</style>
+</head>
+<body>
+
+<h1>TASE — Video Comparison</h1>
+
+<div class="mode-toggle">
+  <button id="btn-baselines" class="active" onclick="setMode('baselines')">Baselines</button>
+  <button id="btn-ablations" onclick="setMode('ablations')">Ablations</button>
+</div>
+
+<div class="selectors">
+  <div class="selector-group">
+    <label>Dataset</label>
+    <select id="sel-dataset" onchange="onDatasetChange()"></select>
+  </div>
+  <div class="selector-group">
+    <label>Experiment</label>
+    <select id="sel-experiment" onchange="onExperimentChange()"></select>
+  </div>
+  <div class="selector-sep"></div>
+  <div class="selector-group">
+    <label>Left Method</label>
+    <select id="sel-left" onchange="onMethodChange()"></select>
+  </div>
+  <div class="selector-group">
+    <label>Right Method</label>
+    <select id="sel-right" onchange="onMethodChange()"></select>
+  </div>
+</div>
+
+<!-- Video comparison frame -->
+<div id="comparison-wrapper">
+  <!-- right video: base layer, full width -->
+  <video id="video-right" loop muted playsinline preload="auto"></video>
+
+  <!-- left video: clipped overlay -->
+  <div id="left-clip">
+    <video id="video-left" loop muted playsinline preload="auto"></video>
+  </div>
+
+  <!-- draggable divider -->
+  <div id="divider">
+    <div id="divider-handle">◀▶</div>
+  </div>
+
+  <!-- method name labels -->
+  <div class="method-label" id="label-left"></div>
+  <div class="method-label" id="label-right"></div>
+
+  <!-- pause icon -->
+  <div id="pause-overlay"><div id="pause-icon">⏸</div></div>
+
+  <!-- no video placeholder -->
+  <div id="no-video-msg" class="visible">Select options above to load videos</div>
+</div>
+
+<!-- progress bar -->
+<div id="progress-area">
+  <div id="time-display">0:00 / 0:00</div>
+  <div id="progress-bar-track">
+    <div id="progress-bar-fill"></div>
+    <div id="progress-bar-thumb"></div>
+  </div>
+</div>
+
+<!-- prompt info -->
+<div id="prompt-box">
+  <span class="label">Experiment Prompt</span>
+  <span id="prompt-text">—</span>
+</div>
+
+<script>
+// ─── Embedded data ────────────────────────────────────────────────────────────
+
+const MANIFEST = {"ablations":{"bear":{"brown_bear":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"],"golden_retriever":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"],"leopard":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"],"original":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"],"polar_bear":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"],"rotweiler":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"],"tiger":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"]},"bike":{"blue_bike":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"],"enduro":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"],"motorcycle":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"],"motorcycle_race":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"],"mtb":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"],"original":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"],"scooter":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"]},"face":{"clown":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"],"einstein":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"],"elf":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"],"old_man":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"],"orc":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"],"original":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"],"vampire":["FULL_FT","FULL","NO_EQV_FT","NO_EQV","PCA_FT","PCA"]}},"baselines":{"bear":{"brown_bear":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"],"golden_retriever":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"],"leopard":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"],"original":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"],"polar_bear":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"],"rotweiler":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"],"tiger":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"]},"bike":{"blue_bike":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"],"enduro":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"],"motorcycle":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"],"motorcycle_race":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"],"mtb":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"],"original":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"],"scooter":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"]},"face":{"clown":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"],"einstein":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"],"elf":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"],"old_man":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"],"orc":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"],"original":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"],"vampire":["DGE","DreamCatalyst","EditSplat","GaussianEditor","Ours"]}}};
+
+const DISPLAY_NAMES = {
+  "baselines": {
+    "Ours": "Ours",
+    "DGE": "Direct Gaussian Editing",
+    "GaussianEditor": "GaussianEditor",
+    "DreamCatalyst": "DreamCatalyst",
+    "EditSplat": "EditSplat",
+    "__original__": "Original (Unedited)"
+  },
+  "ablations": {
+    "FULL_FT": "$\\mathcal{M}^{\\text{TASE}}+\\mathcal{L}_{\\text{cons}}+\\text{FT}$ (Ours)",
+    "FULL": "$\\mathcal{M}^{\\text{TASE}}+\\mathcal{L}_{\\text{cons}}$",
+    "NO_EQV_FT": "$\\mathcal{M}^{\\text{TASE}}+\\text{FT}$",
+    "NO_EQV": "$\\mathcal{M}^{\\text{TASE}}+$",
+    "PCA": "$\\text{PCA}$",
+    "PCA_FT": "$\\text{PCA}+\\text{FT}$",
+    "__original__": "Original (Unedited)"
+  }
+};
+
+const PROMPTS = {"bike":{"original":"a white road bicycle","prompt_template":"a photo of {} next to a bench in a park","blue_bike":"a light blue classic road bike with a brown and chrome handlebar, a brown saddle and beige tires","enduro":"a bright orange enduro dirt bike with a low black saddle, knobby tires, a big chrome front suspension fork, disk brakes and big orange fenders","motorcycle_race":"a light grey racing motorcycle with a low black saddle, a red angular design on the side and red brakes","motorcycle":"a classic blue motorcycle with a low brown saddle, chrome details and a round headlight","mtb":"a light red mountain bike MTB with a chrome suspension fork, disc brakes and fat tires","scooter":"a yellow vintage scooter vespa with a low brown seat and chrome details"},"bear":{"original":"A gray stone statue of a bear","prompt_template":"a photo of {} standing in a forest","brown_bear":"A brown bear in a forest","golden_retriever":"a golden retriever dog with a shiny golden coat and floppy ears","leopard":"a leopard with a sleek yellow coat covered in black rosettes, sharp eyes, and a long tail","polar_bear":"A polar bear with a bright white fur.","rotweiler":"a rotweiler dog with a shiny black coat and brown markings","tiger":"a tiger with bold orange fur and striking black stripes, fierce eyes, and a powerful build"},"face":{"original":"a blonde man","prompt_template":"a portrait of {} in a gray sweater in front of a concrete wall","clown":"a circus clown with white makeup, a red nose, red cheeks and red hair","einstein":"albert einstein with wild gray hair and mustache","elf":"an elf with pointed ears, pale white skin, bright green eyes, and long silver hair","old_man":"an old man with wrinkles, grey hair, and a full beard, wearing thick rimmed glasses, round golden glasses","orc":"an orc with green skin, tusks, and a fierce expression and a scar on the right side of his face","vampire":"a vampire with sharp fangs, pale white skin, and piercing red eyes, long black hair"}};
+
+// ─── Initial defaults ───────────────────────────────────────────────────────
+
+const INITIAL = { dataset: 'bike', experiment: 'enduro', left: 'Ours', right: '__original__' };
+
+// ─── State ───────────────────────────────────────────────────────────────────
+
+let currentMode = 'baselines';
+let splitPct = 50;  // percentage, 0–100
+let isDraggingDivider = false;
+let isDraggingProgress = false;
+let isPaused = false;
+let pauseIconTimeout = null;
+
+// ─── DOM refs ────────────────────────────────────────────────────────────────
+
+const wrapper    = document.getElementById('comparison-wrapper');
+const leftClip   = document.getElementById('left-clip');
+const videoLeft  = document.getElementById('video-left');
+const videoRight = document.getElementById('video-right');
+const dividerEl  = document.getElementById('divider');
+const labelLeft  = document.getElementById('label-left');
+const labelRight = document.getElementById('label-right');
+const pauseOverlay = document.getElementById('pause-overlay');
+const noVideoMsg = document.getElementById('no-video-msg');
+const progressTrack = document.getElementById('progress-bar-track');
+const progressFill  = document.getElementById('progress-bar-fill');
+const progressThumb = document.getElementById('progress-bar-thumb');
+const timeDisplay   = document.getElementById('time-display');
+const promptText    = document.getElementById('prompt-text');
+const promptBox     = document.getElementById('prompt-box');
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function fmtTime(s) {
+  if (!isFinite(s)) return '0:00';
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2,'0')}`;
+}
+
+function getDisplayName(mode, method) {
+  if (method === '__original__') return DISPLAY_NAMES[mode]['__original__'];
+  return DISPLAY_NAMES[mode][method] || method;
+}
+
+/** Strip LaTeX markup for plain-text contexts like <option> labels. */
+function plainDisplayName(mode, method) {
+  const raw = getDisplayName(mode, method);
+  return raw
+    .replace(/\$([^$]+)\$/g, '$1')           // remove $ delimiters
+    .replace(/\\mathcal\{([^}]+)\}/g, '$1') // \mathcal{X} → X
+    .replace(/\\text\{([^}]+)\}/g, '$1')    // \text{X} → X
+    .replace(/\\[a-zA-Z]+\{([^}]+)\}/g, '$1') // other \cmd{X} → X
+    .replace(/\\([a-zA-Z]+)/g, '$1')          // \cmd → cmd
+    .replace(/[{}]/g, '');                     // leftover braces
+}
+
+/** Render a display name string that may contain LaTeX into an element. */
+function renderName(el, rawName) {
+  el.textContent = rawName;
+  // KaTeX auto-render may not be loaded yet; schedule after load if needed
+  if (window.katex) {
+    try {
+      const html = rawName.replace(/\$([^$]+)\$/g, (_, expr) => {
+        try { return katex.renderToString(expr, { throwOnError: false }); }
+        catch { return expr; }
+      });
+      el.innerHTML = html;
+    } catch {}
+  }
+}
+
+// ─── Selector population ─────────────────────────────────────────────────────
+
+function populate(sel, items, selected) {
+  sel.innerHTML = '';
+  for (const item of items) {
+    const opt = document.createElement('option');
+    opt.value = item.value !== undefined ? item.value : item;
+    opt.textContent = item.label !== undefined ? item.label : item;
+    if (opt.value === selected) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('btn-baselines').classList.toggle('active', mode === 'baselines');
+  document.getElementById('btn-ablations').classList.toggle('active', mode === 'ablations');
+  populateDatasets();
+}
+
+function populateDatasets() {
+  const datasets = Object.keys(MANIFEST[currentMode]).sort();
+  const selDataset = document.getElementById('sel-dataset');
+  const prev = selDataset.value;
+  const target = datasets.includes(prev) ? prev :
+                 (datasets.includes(INITIAL.dataset) ? INITIAL.dataset : datasets[0]);
+  populate(selDataset, datasets, target);
+  onDatasetChange();
+}
+
+function onDatasetChange() {
+  const dataset = document.getElementById('sel-dataset').value;
+  const allExps = Object.keys(MANIFEST[currentMode][dataset] || {}).sort();
+  // exclude 'original' from experiment selector — accessed via method selector
+  const experiments = allExps.filter(e => e !== 'original');
+  const selExp = document.getElementById('sel-experiment');
+  const prev = selExp.value;
+  const target = experiments.includes(prev) ? prev :
+                 (experiments.includes(INITIAL.experiment) ? INITIAL.experiment : experiments[0]);
+  populate(selExp, experiments, target);
+  onExperimentChange();
+}
+
+function onExperimentChange() {
+  const dataset    = document.getElementById('sel-dataset').value;
+  const experiment = document.getElementById('sel-experiment').value;
+  const methods    = (MANIFEST[currentMode][dataset] || {})[experiment] || [];
+
+  const selLeft  = document.getElementById('sel-left');
+  const selRight = document.getElementById('sel-right');
+  const prevL = selLeft.value;
+  const prevR = selRight.value;
+
+  // Build options: real methods + virtual "Original"
+  const opts = [
+    { value: '__original__', label: plainDisplayName(currentMode, '__original__') },
+    ...methods.map(m => ({ value: m, label: plainDisplayName(currentMode, m) }))
+  ];
+
+  const initL = methods.includes(INITIAL.left) ? INITIAL.left : (methods[0] || '__original__');
+  const initR = INITIAL.right;
+  const defaultL = methods.includes(prevL) ? prevL :
+                   (prevL === '__original__' ? '__original__' : initL);
+  // default right: pick a different method than left
+  let defaultR = methods.includes(prevR) ? prevR :
+                 (prevR === '__original__' ? '__original__' : initR);
+  if (defaultR === defaultL && methods.length > 0) {
+    defaultR = methods.find(m => m !== defaultL) || '__original__';
+  }
+
+  populate(selLeft,  opts, defaultL);
+  populate(selRight, opts, defaultR);
+
+  onMethodChange();
+}
+
+function onMethodChange() {
+  updateVideos();
+  updatePrompt();
+}
+
+// ─── Video resolution ─────────────────────────────────────────────────────────
+
+function resolveVideoPath(mode, dataset, experiment, method) {
+  if (method === '__original__') return null; // needs peer method
+  return `${mode}/${dataset}/${experiment}/${method}.mp4`;
+}
+
+function updateVideos() {
+  const mode       = currentMode;
+  const dataset    = document.getElementById('sel-dataset').value;
+  const experiment = document.getElementById('sel-experiment').value;
+  const leftMethod  = document.getElementById('sel-left').value;
+  const rightMethod = document.getElementById('sel-right').value;
+
+  if (!dataset || !experiment) return;
+
+  // Resolve paths; "Original" side uses original/<peer>.mp4
+  let leftPath, rightPath;
+  if (leftMethod === '__original__') {
+    const peer = rightMethod === '__original__' ? (Object.keys(MANIFEST[mode][dataset][experiment] || {})[0] || '') : rightMethod;
+    leftPath = peer ? `${mode}/${dataset}/original/${peer}.mp4` : null;
+  } else {
+    leftPath = `${mode}/${dataset}/${experiment}/${leftMethod}.mp4`;
+  }
+
+  if (rightMethod === '__original__') {
+    const peer = leftMethod === '__original__' ? (Object.keys(MANIFEST[mode][dataset][experiment] || {})[0] || '') : leftMethod;
+    rightPath = peer ? `${mode}/${dataset}/original/${peer}.mp4` : null;
+  } else {
+    rightPath = `${mode}/${dataset}/${experiment}/${rightMethod}.mp4`;
+  }
+
+  if (!leftPath || !rightPath) {
+    noVideoMsg.classList.add('visible');
+    noVideoMsg.textContent = 'No video available for this selection.';
+    return;
+  }
+
+  noVideoMsg.classList.remove('visible');
+
+  const currentTime = videoLeft.currentTime || 0;
+  const wasPlaying = !videoLeft.paused;
+
+  // Swap sources only if changed
+  if (videoLeft.getAttribute('src') !== leftPath) {
+    videoLeft.src = leftPath;
+    videoLeft.load();
+  }
+  if (videoRight.getAttribute('src') !== rightPath) {
+    videoRight.src = rightPath;
+    videoRight.load();
+  }
+
+  // Sync playback after both are ready
+  let readyCount = 0;
+  function onReady() {
+    readyCount++;
+    if (readyCount === 2) {
+      videoLeft.currentTime = currentTime;
+      videoRight.currentTime = currentTime;
+      if (wasPlaying || !isPaused) {
+        videoLeft.play().catch(() => {});
+        videoRight.play().catch(() => {});
+        isPaused = false;
+      }
+    }
+  }
+
+  if (videoLeft.readyState >= 3) onReady();
+  else videoLeft.addEventListener('canplay', onReady, { once: true });
+  if (videoRight.readyState >= 3) onReady();
+  else videoRight.addEventListener('canplay', onReady, { once: true });
+
+  // Update labels
+  const dnames = DISPLAY_NAMES[mode] || {};
+  renderName(labelLeft,  getDisplayName(mode, leftMethod));
+  renderName(labelRight, getDisplayName(mode, rightMethod));
+}
+
+// ─── Prompt display ───────────────────────────────────────────────────────────
+
+function updatePrompt() {
+  const dataset    = document.getElementById('sel-dataset').value;
+  const experiment = document.getElementById('sel-experiment').value;
+  const datasetPrompts = PROMPTS[dataset] || {};
+  const editPrompt = datasetPrompts[experiment] || '';
+  const origPrompt = datasetPrompts['original'] || '';
+  const template   = datasetPrompts['prompt_template'] || '{}';
+
+  let html = '';
+  if (experiment && editPrompt) {
+    const full = template.replace('{}', editPrompt);
+    html = `<span class="edit-desc">${escapeHtml(full)}</span>`;
+    if (origPrompt) {
+      html += `<br><span class="original-desc">Original: ${escapeHtml(origPrompt)}</span>`;
+    }
+  } else if (origPrompt) {
+    html = `<span class="original-desc">${escapeHtml(origPrompt)}</span>`;
+  } else {
+    html = '<span style="color:#555">No prompt info available.</span>';
+  }
+  promptText.innerHTML = html;
+  // re-trigger KaTeX after DOM update
+  if (window.renderMathInElement) {
+    try { renderMathInElement(promptBox, {delimiters:[{left:'$',right:'$',display:false}]}); } catch {}
+  }
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─── Divider dragging ─────────────────────────────────────────────────────────
+
+function setSplit(pct) {
+  splitPct = Math.max(2, Math.min(98, pct));
+  const w = wrapper.getBoundingClientRect().width;
+  leftClip.style.width = splitPct + '%';
+  videoLeft.style.width = w + 'px';
+  dividerEl.style.left = splitPct + '%';
+}
+
+dividerEl.addEventListener('mousedown', e => {
+  isDraggingDivider = true;
+  e.preventDefault();
+  e.stopPropagation();
+});
+dividerEl.addEventListener('touchstart', e => {
+  isDraggingDivider = true;
+  e.preventDefault();
+}, { passive: false });
+
+document.addEventListener('mousemove', e => {
+  if (!isDraggingDivider) return;
+  const rect = wrapper.getBoundingClientRect();
+  setSplit(((e.clientX - rect.left) / rect.width) * 100);
+});
+document.addEventListener('touchmove', e => {
+  if (!isDraggingDivider) return;
+  const rect = wrapper.getBoundingClientRect();
+  setSplit(((e.touches[0].clientX - rect.left) / rect.width) * 100);
+}, { passive: false });
+document.addEventListener('mouseup',  () => { isDraggingDivider = false; });
+document.addEventListener('touchend', () => { isDraggingDivider = false; });
+
+// ─── Click to pause ───────────────────────────────────────────────────────────
+
+wrapper.addEventListener('click', e => {
+  // Don't toggle if click was on divider handle
+  if (e.target === dividerEl || dividerEl.contains(e.target)) return;
+  if (isDraggingDivider) return;
+
+  if (isPaused) {
+    videoLeft.play().catch(() => {});
+    videoRight.play().catch(() => {});
+    isPaused = false;
+    pauseOverlay.classList.remove('visible');
+  } else {
+    videoLeft.pause();
+    videoRight.pause();
+    isPaused = true;
+    pauseOverlay.classList.add('visible');
+    pauseOverlay.querySelector('#pause-icon').textContent = '▶';
+  }
+});
+
+// ─── Progress bar ─────────────────────────────────────────────────────────────
+
+function seekTo(pct) {
+  const duration = videoLeft.duration || 0;
+  if (!duration) return;
+  const t = pct * duration;
+  videoLeft.currentTime = t;
+  videoRight.currentTime = t;
+}
+
+function updateProgressUI() {
+  const duration = videoLeft.duration || 0;
+  const current  = videoLeft.currentTime || 0;
+  const pct = duration > 0 ? (current / duration) * 100 : 0;
+  progressFill.style.width = pct + '%';
+  progressThumb.style.left = pct + '%';
+  timeDisplay.textContent = `${fmtTime(current)} / ${fmtTime(duration)}`;
+}
+
+videoLeft.addEventListener('timeupdate', updateProgressUI);
+videoLeft.addEventListener('loadedmetadata', updateProgressUI);
+
+function progressPosFromEvent(e) {
+  const rect = progressTrack.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+}
+
+progressTrack.addEventListener('mousedown', e => {
+  isDraggingProgress = true;
+  seekTo(progressPosFromEvent(e));
+  e.preventDefault();
+});
+progressTrack.addEventListener('touchstart', e => {
+  isDraggingProgress = true;
+  seekTo(progressPosFromEvent(e));
+  e.preventDefault();
+}, { passive: false });
+document.addEventListener('mousemove', e => {
+  if (isDraggingProgress) seekTo(progressPosFromEvent(e));
+});
+document.addEventListener('touchmove', e => {
+  if (isDraggingProgress) seekTo(progressPosFromEvent(e));
+}, { passive: false });
+document.addEventListener('mouseup',  () => { isDraggingProgress = false; });
+document.addEventListener('touchend', () => { isDraggingProgress = false; });
+
+// ─── Sync loop ────────────────────────────────────────────────────────────────
+// Keep right video in sync with left (master)
+
+let syncInterval = null;
+
+function startSyncLoop() {
+  if (syncInterval) clearInterval(syncInterval);
+  syncInterval = setInterval(() => {
+    if (videoLeft.paused || videoRight.paused) return;
+    if (Math.abs(videoLeft.currentTime - videoRight.currentTime) > 0.15) {
+      videoRight.currentTime = videoLeft.currentTime;
+    }
+  }, 500);
+}
+startSyncLoop();
+
+// When left video loops, reset right to beginning too
+videoLeft.addEventListener('seeked', () => {
+  // Rough sync: if left was set to near 0 (loop), align right
+  if (videoLeft.currentTime < 0.3 && videoRight.duration) {
+    videoRight.currentTime = videoLeft.currentTime;
+  }
+});
+
+// ─── Resize handler ───────────────────────────────────────────────────────────
+
+function onResize() {
+  const w = wrapper.getBoundingClientRect().width;
+  videoLeft.style.width  = w + 'px';
+  videoRight.style.width = w + 'px';
+  // recalculate left-clip width to maintain split
+  leftClip.style.width = splitPct + '%';
+}
+
+window.addEventListener('resize', onResize);
+
+// ─── Initial render ───────────────────────────────────────────────────────────
+
+setSplit(50);
+populateDatasets();
+onResize();
+
+// Trigger KaTeX render on labels after fonts load
+document.addEventListener('DOMContentLoaded', () => {
+  updateVideos();
+  updatePrompt();
+});
+</script>
+</body>
+</html>

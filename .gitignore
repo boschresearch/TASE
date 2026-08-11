@@ -1,0 +1,35 @@
+**/__pycache__/
+
+# python package artifacts
+*.egg-info/
+dist/
+build/
+.eggs/
+.lock
+
+# UV environment
+.venv/
+uv.lock
+
+# result and data folders
+DATA/
+OUTPUT/
+WEIGHTS/
+runs/
+jobs/
+tests/
+
+# Editor swap/backups
+*~
+*.swp
+*.bak
+
+# macOS Finder
+.DS_Store
+
+# Windows thumbnail cache
+Thumbs.db
+
+# IDE settings (optional)
+.vscode/
+.idea/

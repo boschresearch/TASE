@@ -1,0 +1,9 @@
+{
+    "mode": "local",
+    "auto_edit_iters": 4,
+    "auto_console_iters": 16,
+    "auto_train_steps": 200,
+    "auto_geometry_lr_scale_max": 1.0,
+    "prompt": "a light blue classic road bike with a brown and chrome handlebar, a brown saddle and beige tires",
+    "auto_edit": true
+}

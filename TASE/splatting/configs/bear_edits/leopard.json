@@ -1,0 +1,9 @@
+{
+    "mode": "local",
+    "auto_edit_iters": 8,
+    "auto_console_iters": 20,
+    "auto_geometry_lr_scale_max": 2.0,
+    "auto_train_steps": 300,
+    "prompt": "a leopard with a sleek yellow coat covered in black rosettes, sharp eyes, and a long tail",
+    "auto_edit": true
+}

@@ -1,0 +1,29 @@
+{
+    "mode": "local",
+    "runner_config": "tase_edit_local.yml",
+    "segmentation": "/fs/scratch/rb_bd_dlp_rng-dl01_cr_AIQ_employees/fat2hi/Workspace/Repos/TASE/OUTPUT/reconstruction/bicycle/bike.seg",
+    "ckpt_path": "/fs/scratch/rb_bd_dlp_rng-dl01_cr_AIQ_employees/fat2hi/Workspace/Repos/TASE/OUTPUT/reconstruction/bicycle/ckpts/step29999.pt",
+    "target_opacity": 0.0,
+    "opcacity_decay": 0.025,
+    "opacity_reg": 0.05,
+    "color_desaturate": 0.005,
+    "color_reg": 0.005,
+    "local_alpha_reg_interval": 10,
+    "geometry_change_penalty": 2.0,
+
+    "auto_edit_iters": 12,
+    "auto_console_iters": 24,
+    "auto_train_steps": 300,
+    "auto_geometry_lr_scale_max": 3.0,
+    "prompt": "a classic blue motorcycle with a low brown saddle, chrome details and a round headlight",
+    "auto_edit": true,
+
+    "auto_ctrl_strength_start": 0.45,
+    "auto_rgb_noise_start": 1.0,
+    "auto_rgb_noise_cap_edit": 0.95,
+    "auto_2d_mask_dilate_start": 0.025,
+    "auto_2d_mask_dilate_cap": 0.0,
+    "auto_ctrl_dims_start": 8,
+    "auto_ctrl_dims_cap": 64,
+    "auto_ctrl_dims_cap_console": 64
+}

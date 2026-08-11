@@ -1,0 +1,14 @@
+{
+    "mode": "local",
+    "auto_edit": false,
+    "runner_config": "tase_edit_local.yml",
+    "segmentation": "my_run/bicycle/ckpts/bike.seg",
+    "ckpt_path": "my_run/bicycle/ckpts/step29999.pt",
+    "color_reg": 0.005,
+    "color_desaturate": 0.005,
+    "target_opacity": 0.0,
+    "opcacity_decay": 0.025,
+    "opacity_reg": 0.05,
+    "local_alpha_reg_interval": 10,
+    "geometry_change_penalty": 2.0
+}
