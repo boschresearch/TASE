@@ -4,13 +4,16 @@ This is the companion code for the paper [TASE: Truncation-Aware Semantic Embedd
 
 ## Purpose of the project
 
+![Truncation-aware semantic embeddings (TASE) enable 3D segmentation and editing](assets/overview.png)
+
+> *Abstract:* High-fidelity semantic 3D scene representations are crucial for numerous applications, including robotics, autonomous driving, and simulation. Beyond this, the ability to edit such representations enables developers to adapt these applications more easily to specific target scenarios. Current approaches provide limited support for controllable editing. We introduce TASE, a method that projects pretrained 2D semantic features into a truncation-aware embedding space to enable flexible 3D scene editing. Our method explicitly optimizes a feature space in which progressively reducing feature channels yields increasingly abstract semantic representations, while retaining more channels preserves fine-grained detail. Additionally, we improve multi-view consistency of the features using a scale- and translation-equivariance loss. The resulting truncation-aware embedding space enables text-driven edits to 3D scenes, providing explicit control over how strongly edits adhere to the original scene content and allowing more substantial modifications than prior methods. Moreover, we propose a finetuning stage for the editing diffusion model to mitigate artifacts caused by geometric changes. Experimental results demonstrate competitive performance in 3D scene editing, substantially outperforming prior methods on edits involving large geometric modifications.
+
 This software is a research prototype, solely developed for and published as part of the publication [TASE: Truncation-Aware Semantic Embeddings for 3D Scene Understanding and Editing](https://arxiv.org/abs/2606.03314). It will neither be maintained nor monitored in any way.
 
-<!-- Provide detailed description of the project, including figures --> 
 
 ## Installation
 
-Peak VRAM usage is about 68 GB during editing. Tested on NVIDIA A100 (80 GB), H200, and B200 with CUDA 12.8+.
+Peak VRAM usage is about 68 GB during editing. Tested on NVIDIA A100 (80 GB), H200, and B200 with CUDA 13.0.
 
 **Prerequisites**
 - [uv](https://github.com/astral-sh/uv) package manager
@@ -253,16 +256,15 @@ For a list of other open source components included in PROJECT-NAME, see the fil
 
 ## Citation
 
-<!-- Update the citation -->
-
 ```
-@misc{faasch2026tase,
-      title={TASE: Truncation-Aware Semantic Embeddings for 3D Scene Understanding and Editing}, 
-      author={Tim-Felix Faasch and Jochen Kall and Lucas Nunes and Jens Behley and Cyrill Stachniss},
-      year={2026},
-      eprint={2606.03314},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2606.03314}, 
+@InProceedings{Faasch2026_TASE,
+    author="Faasch, Tim-Felix
+    and Kall, Jochen
+    and Nunes, Lucas
+    and Behley, Jens
+    and Stachniss, Cyrill",
+    booktitle="Proc.~of the Europ.~Conf.~on Computer Vision (ECCV)",
+    title="TASE: Truncation-Aware Semantic Embeddings for 3D Scene Understanding and Editing",
+    year="2026"
 }
 ```
